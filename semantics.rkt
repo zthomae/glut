@@ -60,7 +60,7 @@
           (instruction-key an-instruction)
           val))
 
-(define (run instructions first in out)
+(define (run instructions in out)
   (define (run-machine a-state)
     (define (die) (set-state-running! a-state #f))
     (define (get-instruction i)
@@ -75,37 +75,30 @@
       (if (state-running a-state)
           (execute-next)
           a-state))
-    (define f (number->string first))
-    (update a-state "$pc" f)
-    (step f))
+    (update a-state "$pc" "0")
+    (step "0"))
   (define (start)
     (define len (length (hash->list instructions)))
     (when (> len 0)
       (begin
-        (define lines (+ first len))
-        (define a-state (new-state lines in out))
+        (define a-state (new-state len in out))
         (run-machine a-state))))
-  (if (< first 0) (error "start must be non-negative")
-      (start)))
+  (start))
 
 (let ([instructions (make-hash)])
   (define cin (current-input-port))
   (define cout (current-output-port))
   
   ;; executing no instructions should do nothing
-  (check-not-exn (lambda () (run instructions 0 cin cout)))
-  (check-not-exn (lambda () (run instructions 512 cin cout)))
-
-  ;; executing with negative first line should error
-  (check-exn exn:fail? (lambda () (run instructions -1 cin cout)))
+  (check-not-exn (lambda () (run instructions cin cout)))
 
   ;; test simple instruction
   (hash-set! instructions "0" (make-instruction "first" "set"))
-  (let ([s (run instructions 0 cin cout)])
+  (let ([s (run instructions cin cout)])
     (check-equal? (lookup s "first") "set"))
 
   (hash-set! instructions "1" (make-instruction "second" "also set"))
-  (let ([s (run instructions 0 cin cout)])
+  (let ([s (run instructions cin cout)])
     (check-equal? (lookup s "first") "set")
     (check-equal? (lookup s "second") "also set"))
 
@@ -113,7 +106,7 @@
   (hash-set! instructions "0" (make-instruction "first" (make-reference "$pc")))
   (hash-set! instructions "1" (make-instruction "second" (make-reference "first")))
   (hash-set! instructions "2" (make-instruction "third" "first"))
-  (let ([s (run instructions 0 cin cout)])
+  (let ([s (run instructions cin cout)])
     (check-equal? (lookup s "second") (lookup s "first"))
     (check-equal? (lookup s "third") "first"))
   
@@ -122,7 +115,7 @@
   (hash-set! instructions "0" (make-instruction "first" (make-reference "$in")))
   (hash-set! instructions "1" (make-instruction "second" (make-reference "$in")))
   (hash-set! instructions "2" (make-instruction "third" (make-reference "$in")))
-  (let ([s (run instructions 0 string-input cout)])
+  (let ([s (run instructions string-input cout)])
     (check-equal? (lookup s "first") "1")
     (check-equal? (lookup s "second") "2")
     (check-equal? (lookup s "third") ""))
@@ -132,5 +125,5 @@
   (hash-set! instructions "0" (make-instruction "$out" "Hello"))
   (hash-set! instructions "1" (make-instruction "$out" " "))
   (hash-set! instructions "2" (make-instruction "$out" "world"))
-  (let ([s (run instructions 0 cin string-output)])
+  (let ([s (run instructions cin string-output)])
     (check-equal? (get-output-string string-output) "Hello world")))

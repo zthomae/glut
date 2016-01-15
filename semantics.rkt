@@ -8,21 +8,11 @@
 
 (define-struct state (table in out [running #:mutable]))
 
-(define (new-state lines in out)
-  (make-state (make-hash (make-increments lines)) in out #t))
+(define (new-state jump-pairs in out)
+  (make-state (make-hash jump-pairs) in out #t))
 
 (define (concat . keys)
   (string-join keys "$"))
-
-(define (make-increments last)
-  (define (add-increment n rest)
-    (define src (concat "next" (number->string n)))
-    (define next (add1 n))
-    (define dst (number->string next))
-    (if (= next last)
-        rest
-        (add-increment next (cons (cons src dst) rest))))
-  (add-increment 0 '()))
 
 (define (lookup a-state key)
   (define (die) (set-state-running! a-state #f))
@@ -47,24 +37,35 @@
   (define v (lookup a-state "$out"))
   (write-string v out))
 
-(define-struct instruction (key val))
+(define-struct instruction (index key val))
 (define-struct reference (key))
 
 (define (execute-instr a-state an-instruction)
+  (define key (reference-key (instruction-key an-instruction)))
   (define i-v (instruction-val an-instruction))
   (define val
     (match i-v
       [(reference k) (lookup a-state k)]
       [_ i-v])) ; This is bad...
   (update a-state
-          (instruction-key an-instruction)
+          key
           val))
 
 (define (run instructions in out)
+  (define (hash-instructions)
+    (define h (make-hash))
+    (define (add-entry xs)
+      (if (null? xs)
+          h
+          (begin
+            (hash-set! h (instruction-index (car xs)) (car xs))
+            (add-entry (cdr xs)))))
+    (add-entry instructions))
+  (define hashed (hash-instructions))
   (define (run-machine a-state)
     (define (die) (set-state-running! a-state #f))
     (define (get-instruction i)
-      (hash-ref instructions i die))
+      (hash-ref hashed i die))
     (define (step i)
       (define instr (get-instruction i))
       (define (execute-next)
@@ -78,52 +79,59 @@
     (update a-state "$pc" "0")
     (step "0"))
   (define (start)
-    (define len (length (hash->list instructions)))
-    (when (> len 0)
-      (begin
-        (define a-state (new-state len in out))
-        (run-machine a-state))))
+    (define jumps (make-jumps instructions))
+    (define a-state (new-state jumps in out))
+    (run-machine a-state))
   (start))
 
-(let ([instructions (make-hash)])
-  (define cin (current-input-port))
-  (define cout (current-output-port))
+(define (make-jumps instructions)
+  (if (or (null? instructions) (null? (cdr instructions)))
+      '()
+      (let ([i (concat "next" (instruction-index (car instructions)))]
+            [j (instruction-index (cadr instructions))])
+        (cons (cons i j) (make-jumps (cdr instructions))))))
+
+(let ([cin (current-input-port)]
+      [cout (current-output-port)])
   
   ;; executing no instructions should do nothing
-  (check-not-exn (lambda () (run instructions cin cout)))
+  (let ([instructions '()])
+    (check-not-exn (lambda () (run instructions cin cout))))
 
   ;; test simple instruction
-  (hash-set! instructions "0" (make-instruction "first" "set"))
-  (let ([s (run instructions cin cout)])
-    (check-equal? (lookup s "first") "set"))
+  (let* ([i1 (make-instruction "0" (make-reference "first") "set")]
+         [i2 (make-instruction "1" (make-reference "second") "also set")]
+         [instructions (list i1 i2)])
+    (let ([s (run instructions cin cout)])
+      (check-equal? (lookup s "first") "set")
+      (check-equal? (lookup s "second") "also set")))
 
-  (hash-set! instructions "1" (make-instruction "second" "also set"))
-  (let ([s (run instructions cin cout)])
-    (check-equal? (lookup s "first") "set")
-    (check-equal? (lookup s "second") "also set"))
-
-  ;; test setting
-  (hash-set! instructions "0" (make-instruction "first" (make-reference "$pc")))
-  (hash-set! instructions "1" (make-instruction "second" (make-reference "first")))
-  (hash-set! instructions "2" (make-instruction "third" "first"))
-  (let ([s (run instructions cin cout)])
-    (check-equal? (lookup s "second") (lookup s "first"))
-    (check-equal? (lookup s "third") "first"))
+  ;; test references
+  (let* ([i1 (make-instruction "0" (make-reference "first") (make-reference "$pc"))]
+         [i2 (make-instruction "1" (make-reference "second") (make-reference "first"))]
+         [i3 (make-instruction "3" (make-reference "third") "first")]
+         [instructions (list i1 i2 i3)])
+    (let ([s (run instructions cin cout)])
+      (check-equal? (lookup s "second") (lookup s "first"))
+      (check-equal? (lookup s "third") "first")))
   
   ;; test input
-  (define string-input (open-input-string "12"))
-  (hash-set! instructions "0" (make-instruction "first" (make-reference "$in")))
-  (hash-set! instructions "1" (make-instruction "second" (make-reference "$in")))
-  (hash-set! instructions "2" (make-instruction "third" (make-reference "$in")))
-  (let ([s (run instructions string-input cout)])
-    (check-equal? (lookup s "first") "1")
-    (check-equal? (lookup s "second") "2")
-    (check-equal? (lookup s "third") ""))
+  (let* ([i1 (make-instruction "0" (make-reference "first") (make-reference "$in"))]
+         [i2 (make-instruction "2" (make-reference "second") (make-reference "$in"))]
+         [i3 (make-instruction "5" (make-reference "third") (make-reference "$in"))]
+         [instructions (list i1 i2 i3)]
+         [string-input (open-input-string "12")])
+    (let ([s (run instructions string-input cout)])
+      (check-equal? (lookup s "first") "1")
+      (check-equal? (lookup s "second") "2")
+      (check-equal? (lookup s "third") "")))
 
   ;; test output
-  (define string-output (open-output-string))
-  (hash-set! instructions "0" (make-instruction "$out" "Hello"))
-  (hash-set! instructions "1" (make-instruction "$out" " "))
-  (hash-set! instructions "2" (make-instruction "$out" "world"))
-  (let ([s (run instructions cin string-output)])
-    (check-equal? (get-output-string string-output) "Hello world")))
+  (let* ([i1 (make-instruction "0" (make-reference "$out") "Hello")]
+         [i2 (make-instruction "1" (make-reference "space") " ")]
+         [i3 (make-instruction "2" (make-reference "$out") (make-reference "space"))]
+         [i4 (make-instruction "3" (make-reference "$out") "world")]
+         [instructions (list i1 i2 i3 i4)]
+         [string-output (open-output-string)])
+    (let ([s (run instructions cin string-output)])
+      (check-equal? (get-output-string string-output) "Hello world"))))

@@ -37,23 +37,10 @@
 
 (define (read-in a-state)
   (define in (state-in a-state))
-  (define v (read-word in))
-  (update a-state "$in" v))
-
-(define (read-word in)
-  (define (skip-whitespace)
-    (define c (peek-char in))
-    (when (and (not (eof-object? c)) (char-whitespace? c))
-      (begin
-        (read-char in)
-        (skip-whitespace))))
-  (define (get-word word)
-    (define c (peek-char in))
-    (if (or (eof-object? c) (char-whitespace? c))
-        word
-        (get-word (string-append word (make-string 1 (read-char in))))))
-  (skip-whitespace)
-  (get-word ""))
+  (define c (read-char in))
+  (if (eof-object? c)
+      (update a-state "$in" "")
+      (update a-state "$in" (make-string 1 c))))
 
 (define (write-out a-state)
   (define out (state-out a-state))
@@ -131,13 +118,13 @@
     (check-equal? (lookup s "third") "first"))
   
   ;; test input
-  (define string-input (open-input-string "Hello world"))
+  (define string-input (open-input-string "12"))
   (hash-set! instructions "0" (make-instruction "first" (make-reference "$in")))
   (hash-set! instructions "1" (make-instruction "second" (make-reference "$in")))
   (hash-set! instructions "2" (make-instruction "third" (make-reference "$in")))
   (let ([s (run instructions 0 string-input cout)])
-    (check-equal? (lookup s "first") "Hello")
-    (check-equal? (lookup s "second") "world")
+    (check-equal? (lookup s "first") "1")
+    (check-equal? (lookup s "second") "2")
     (check-equal? (lookup s "third") ""))
 
   ;; test output

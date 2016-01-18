@@ -12,25 +12,25 @@
   (make-state (make-hash jump-pairs) in out #t))
 
 (define (concat . keys)
-  (string-join keys "$"))
+  (string-join (filter non-empty-string? keys) "$"))
 
 (define (lookup a-state key)
   (define (die) (set-state-running! a-state #f))
   (define table (state-table a-state))
-  (when (equal? key "$in") (read-in a-state))
+  (when (equal? key "$in") (read-in! a-state))
   (hash-ref table key die))
 
-(define (update a-state key val)
+(define (update! a-state key val)
   (define table (state-table a-state))
   (hash-set! table key val)
   (when (equal? key "$out") (write-out a-state)))
 
-(define (read-in a-state)
+(define (read-in! a-state)
   (define in (state-in a-state))
   (define c (read-char in))
   (if (eof-object? c)
-      (update a-state "$in" "")
-      (update a-state "$in" (make-string 1 c))))
+      (update! a-state "$in" "")
+      (update! a-state "$in" (make-string 1 c))))
 
 (define (write-out a-state)
   (define out (state-out a-state))
@@ -40,16 +40,21 @@
 (define-struct instruction (index key val))
 (define-struct reference (key))
 
+(define (resolve a-state key)
+  (define (resolve-key k)
+    (match k
+      [(reference r) (lookup a-state (resolve a-state r))]
+      [(list l) (resolve a-state l)]
+      [_ k]))
+  (define (resolve-inner ks)
+    (if (null? ks) '()
+        (cons (resolve-key (car ks)) (resolve-inner (cdr ks)))))
+  (apply concat (resolve-inner key)))
+
 (define (execute-instr a-state an-instruction)
-  (define key (reference-key (instruction-key an-instruction)))
-  (define i-v (instruction-val an-instruction))
-  (define val
-    (match i-v
-      [(reference k) (lookup a-state k)]
-      [_ i-v])) ; This is bad...
-  (update a-state
-          key
-          val))
+  (define key (resolve a-state (reference-key (car (instruction-key an-instruction)))))
+  (define val (resolve a-state (instruction-val an-instruction)))
+  (update! a-state key val))
 
 (define (run instructions in out)
   (define (hash-instructions)
@@ -71,12 +76,12 @@
       (define (execute-next)
         (execute-instr a-state instr)
         (let ([next (lookup a-state (concat "next" i))])
-          (update a-state "$pc" next)
+          (update! a-state "$pc" next)
           (step next)))
       (if (state-running a-state)
           (execute-next)
           a-state))
-    (update a-state "$pc" "0")
+    (update! a-state "$pc" "0")
     (step "0"))
   (define (start)
     (define jumps (make-jumps instructions))
@@ -92,45 +97,59 @@
         (cons (cons i j) (make-jumps (cdr instructions))))))
 
 (let ([cin (current-input-port)]
-      [cout (current-output-port)])
+      [cout (current-output-port)]
+      [m-i make-instruction]
+      [m-r make-reference])
   
   ;; executing no instructions should do nothing
   (let ([instructions '()])
     (check-not-exn (lambda () (run instructions cin cout))))
 
   ;; test simple instruction
-  (let* ([i1 (make-instruction "0" (make-reference "first") "set")]
-         [i2 (make-instruction "1" (make-reference "second") "also set")]
-         [instructions (list i1 i2)])
-    (let ([s (run instructions cin cout)])
-      (check-equal? (lookup s "first") "set")
-      (check-equal? (lookup s "second") "also set")))
+  (let* ([i1 (m-i "0" (list (m-r '("first"))) '("set"))]
+         [i2 (m-i "1" (list (m-r '("second"))) '("also set"))]
+         [instructions (list i1 i2)]
+         [s (run instructions cin cout)])
+    (check-equal? (lookup s "first") "set")
+    (check-equal? (lookup s "second") "also set"))
 
   ;; test references
-  (let* ([i1 (make-instruction "0" (make-reference "first") (make-reference "$pc"))]
-         [i2 (make-instruction "1" (make-reference "second") (make-reference "first"))]
-         [i3 (make-instruction "3" (make-reference "third") "first")]
-         [instructions (list i1 i2 i3)])
-    (let ([s (run instructions cin cout)])
-      (check-equal? (lookup s "second") (lookup s "first"))
-      (check-equal? (lookup s "third") "first")))
-  
-  ;; test input
-  (let* ([i1 (make-instruction "0" (make-reference "first") (make-reference "$in"))]
-         [i2 (make-instruction "2" (make-reference "second") (make-reference "$in"))]
-         [i3 (make-instruction "5" (make-reference "third") (make-reference "$in"))]
+  (let* ([i1 (m-i "0" (list (m-r '("first"))) (list (m-r '("$pc"))))]
+         [i2 (m-i "1" (list (m-r '("second"))) (list (m-r '("first"))))]
+         [i3 (m-i "3" (list (m-r '("third"))) '("first"))]
          [instructions (list i1 i2 i3)]
-         [string-input (open-input-string "12")])
-    (let ([s (run instructions string-input cout)])
-      (check-equal? (lookup s "first") "1")
-      (check-equal? (lookup s "second") "2")
-      (check-equal? (lookup s "third") "")))
+         [s (run instructions cin cout)])
+    (check-equal? (lookup s "second") (lookup s "first"))
+    (check-equal? (lookup s "third") "first"))
+
+  ;; test basic concatenated lookup
+  (let* ([i1 (m-i "0" (list (m-r '("next" "0"))) '("4"))]
+         [s (run (list i1) cin cout)])
+    (check-equal? (lookup s "next$0") "4"))
+
+  ;; test nested lookup
+  (let* ([i1 (m-i "0" (list (m-r '("test"))) '("next"))]
+         [i2 (m-i "1" (list (m-r (list "first" (m-r '("test"))))) '("hello"))]
+         [instructions (list i1 i2)]
+         [s (run instructions cin cout)])
+    (check-equal? (lookup s "first$next") "hello"))
+
+  ;; test input
+  (let* ([i1 (m-i "0" (list (m-r '("first"))) (list (m-r '("$in"))))]
+         [i2 (m-i "2" (list (m-r '("second"))) (list (m-r '("$in"))))]
+         [i3 (m-i "5" (list (m-r '("third"))) (list (m-r '("$in"))))]
+         [instructions (list i1 i2 i3)]
+         [string-input (open-input-string "12")]
+         [s (run instructions string-input cout)])
+    (check-equal? (lookup s "first") "1")
+    (check-equal? (lookup s "second") "2")
+    (check-equal? (lookup s "third") ""))
 
   ;; test output
-  (let* ([i1 (make-instruction "0" (make-reference "$out") "Hello")]
-         [i2 (make-instruction "1" (make-reference "space") " ")]
-         [i3 (make-instruction "2" (make-reference "$out") (make-reference "space"))]
-         [i4 (make-instruction "3" (make-reference "$out") "world")]
+  (let* ([i1 (m-i "0" (list (m-r '("$out"))) '("Hello"))]
+         [i2 (m-i "1" (list (m-r '("space"))) '(" "))]
+         [i3 (m-i "2" (list (m-r '("$out"))) (list (m-r '("space"))))]
+         [i4 (m-i "3" (list (m-r '("$out"))) '("world"))]
          [instructions (list i1 i2 i3 i4)]
          [string-output (open-output-string)])
     (let ([s (run instructions cin string-output)])

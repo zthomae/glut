@@ -52,13 +52,10 @@
   (check-equal? (lookup s "2") "5")
 
   ;; test input
-  (lookup s "$in")
   (check-equal? (lookup s "$in") "1")
-  (lookup s "$in")
   (check-equal? (lookup s "$in") "")
 
   ;; test output
-  (update! s "key" "written")
-  (write-out s)
-  (check-equal? out "written"))
+  (update! s "$out" "written")
+  (check-equal? (get-output-string out) "written"))
   

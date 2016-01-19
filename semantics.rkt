@@ -1,41 +1,10 @@
 #lang racket
 
 (require racket/base)
-(require racket/string)
 (require racket/match)
 (require rackunit)
+(require "table.rkt")
 (provide (all-defined-out))
-
-(define-struct state (table in out [running #:mutable]))
-
-(define (new-state jump-pairs in out)
-  (make-state (make-hash jump-pairs) in out #t))
-
-(define (concat . keys)
-  (string-join (filter non-empty-string? keys) "$"))
-
-(define (lookup a-state key)
-  (define (die) (set-state-running! a-state #f))
-  (define table (state-table a-state))
-  (when (equal? key "$in") (read-in! a-state))
-  (hash-ref table key die))
-
-(define (update! a-state key val)
-  (define table (state-table a-state))
-  (hash-set! table key val)
-  (when (equal? key "$out") (write-out a-state)))
-
-(define (read-in! a-state)
-  (define in (state-in a-state))
-  (define c (read-char in))
-  (if (eof-object? c)
-      (update! a-state "$in" "")
-      (update! a-state "$in" (make-string 1 c))))
-
-(define (write-out a-state)
-  (define out (state-out a-state))
-  (define v (lookup a-state "$out"))
-  (write-string v out))
 
 (define-struct instruction (index key val))
 (define-struct reference (key))

@@ -1,10 +1,11 @@
 #lang racket/base
 
 (require parser-tools/lex)
+(require racket/generator)
 (require (prefix-in re- parser-tools/lex-sre))
 (require rackunit)
 
-(provide (all-defined-out))
+(provide lex)
 
 (define glut-lexer
   (lexer
@@ -28,6 +29,9 @@
    [(eof)
     ;; =>
     '()]))
+
+(define (lex input-port)
+  (sequence->generator (glut-lexer input-port)))
 
 (let ([expr "[a][b[c]]"]
       [stmt "[b] = next[1]"])

@@ -3,6 +3,7 @@
 (require parser-tools/lex)
 (require parser-tools/yacc)
 (require (prefix-in re- parser-tools/lex-sre))
+(require "semantics.rkt")
 (require rackunit)
 
 (define-tokens value-tokens (ID))
@@ -20,7 +21,9 @@
    [whitespace (glut-lexer input-port)]
    [(eof) 'EOF]))
 
-(define glut-parser
+(define (glut-parser line-count)
+  (define (increment!)
+    (set! line-count (+ line-count 1)))
   (parser
    (start prgm)
    (end EOF)
@@ -29,12 +32,20 @@
 
    (grammar
     (prgm [() '()]
-          [(stmt prgm) (cons $1 $2)])
-    (stmt [(lookup EQ expr NEWLINE) (cons $1 $3)])
+          [(line prgm) (cons $1 $2)])
+    (line [(NEWLINE)
+           (begin
+             (increment!)
+             '())]
+          [(stmt)
+           (begin
+             (increment!)
+             $1)])
+    (stmt [(lookup EQ expr NEWLINE)
+           (make-instruction (number->string line-count) (list $1) $3)])
     (expr [() '()]
           [(ID expr) (cons $1 $2)]
           [(lookup expr) (cons $1 $2)])
-    (lookup [(LBR expr RBR) (cons 'REF $2)]))))
-
+    (lookup [(LBR expr RBR) (make-reference $2)]))))
 (define (parse in)
-  (glut-parser (lambda () (glut-lexer in))))
+  ((glut-parser 0) (lambda () (glut-lexer in))))

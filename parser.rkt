@@ -7,8 +7,16 @@
 
 (provide parse)
 
-(define-tokens value-tokens (ID))
+(define-tokens value-tokens (ID STRING-LIT))
 (define-empty-tokens empty-tokens (LBR RBR EQ EOF COMMENT NEWLINE))
+
+(define (strip-quotes s)
+  (define last (- (string-length s) 1))
+  (define start
+    (if (eq? #\" (string-ref s 0)) 1 0))
+  (define end
+    (if (eq? #\" (string-ref s last)) last (+ 1 last)))
+  (substring s start end))
 
 (define glut-lexer
   (lexer
@@ -16,6 +24,8 @@
    [#\[ 'LBR]
    [#\] 'RBR]
    [#\= 'EQ]
+   [(re-: "\"" (complement (re-: (re-~ "\\") "\"")) "\"")
+    (token-STRING-LIT (strip-quotes lexeme))]
    [(re-: ";" (re-* (re-~ "\n")) "\n") 'COMMENT]
    [(re-+ (re-~ (re-or whitespace #\[ #\] #\=)))
     (token-ID lexeme)]
@@ -50,6 +60,7 @@
     (stmt [(lookup EQ expr NEWLINE)
            (make-instruction (number->string line-count) (list $1) $3)])
     (expr [() '()]
+          [(STRING-LIT) (list $1)]
           [(ID expr) (cons $1 $2)]
           [(lookup expr) (cons $1 $2)])
     (lookup [(LBR expr RBR) (make-reference $2)]))))

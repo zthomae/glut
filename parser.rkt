@@ -8,7 +8,7 @@
 (provide parse)
 
 (define-tokens value-tokens (ID))
-(define-empty-tokens empty-tokens (LBR RBR EQ EOF NEWLINE))
+(define-empty-tokens empty-tokens (LBR RBR EQ EOF COMMENT NEWLINE))
 
 (define glut-lexer
   (lexer
@@ -16,6 +16,7 @@
    [#\[ 'LBR]
    [#\] 'RBR]
    [#\= 'EQ]
+   [(re-: ";" (re-* (re-~ "\n")) "\n") 'COMMENT]
    [(re-+ (re-~ (re-or whitespace #\[ #\] #\=)))
     (token-ID lexeme)]
    ;; if non-newline whitespace encountered, lex for the next token
@@ -35,6 +36,10 @@
     (prgm [() '()]
           [(line prgm) (cons $1 $2)])
     (line [(NEWLINE)
+           (begin
+             (increment!)
+             '())]
+          [(COMMENT)
            (begin
              (increment!)
              '())]

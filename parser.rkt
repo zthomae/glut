@@ -4,7 +4,8 @@
 (require parser-tools/yacc)
 (require (prefix-in re- parser-tools/lex-sre))
 (require "semantics.rkt")
-(require rackunit)
+
+(provide parse)
 
 (define-tokens value-tokens (ID))
 (define-empty-tokens empty-tokens (LBR RBR EQ EOF NEWLINE))
@@ -47,5 +48,7 @@
           [(ID expr) (cons $1 $2)]
           [(lookup expr) (cons $1 $2)])
     (lookup [(LBR expr RBR) (make-reference $2)]))))
+
 (define (parse in)
   ((glut-parser 0) (lambda () (glut-lexer in))))
+

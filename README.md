@@ -3,6 +3,12 @@
 **G**iant **L**ook**U**p **T**able is an esoteric programming language
 with only one kind of statement: Setting a value in a hash table.
 
+## Usage
+
+```
+$ racket glut.rkt [program_file]
+```
+
 ## Expressions
 
 An expression in **glut** is either a string (the only primitive type
@@ -67,8 +73,12 @@ as the program is running:
 
 The values `[next[$pc]]` are initialized at startup to store the
 immediate next instruction number for each instruction `$pc`. The
-instruction number refers to the line number in the source file. The
-instructions themselves are not stored in the global table.
+instruction number refers to the line number in the source file.
+For this reason, every statement must be on its own line. NOTE:
+Due to a current limitation in the parser, the last source line
+must also be followed by a newline.
+
+The instructions themselves are not stored in the global table.
 
 The program terminates when an invalid lookup is made -- that is,
 attempting to get the value stored under a key when nothing has been

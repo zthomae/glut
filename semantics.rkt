@@ -2,8 +2,8 @@
 
 (require racket/base)
 (require racket/match)
-(require rackunit)
 (require "table.rkt")
+
 (provide (all-defined-out))
 
 (define-struct instruction (index key val))
@@ -67,61 +67,63 @@
             [j (instruction-index (cadr instructions))])
         (cons (cons i j) (make-jumps (cdr instructions))))))
 
-(let ([cin (current-input-port)]
-      [cout (current-output-port)]
-      [m-i make-instruction]
-      [m-r make-reference])
-  
-  ;; executing no instructions should do nothing
-  (let ([instructions '()])
-    (check-not-exn (lambda () (run instructions cin cout))))
+(module+ test
+  (require rackunit)
+  (let ([cin (current-input-port)]
+       [cout (current-output-port)]
+       [m-i make-instruction]
+       [m-r make-reference])
 
-  ;; test simple instruction
-  (let* ([i1 (m-i "0" (list (m-r '("first"))) '("set"))]
-         [i2 (m-i "1" (list (m-r '("second"))) '("also set"))]
-         [instructions (list i1 i2)]
-         [s (run instructions cin cout)])
-    (check-equal? (lookup s "first") "set")
-    (check-equal? (lookup s "second") "also set"))
+   ;; executing no instructions should do nothing
+   (let ([instructions '()])
+     (check-not-exn (lambda () (run instructions cin cout))))
 
-  ;; test references
-  (let* ([i1 (m-i "0" (list (m-r '("first"))) (list (m-r '("$pc"))))]
-         [i2 (m-i "1" (list (m-r '("second"))) (list (m-r '("first"))))]
-         [i3 (m-i "3" (list (m-r '("third"))) '("first"))]
-         [instructions (list i1 i2 i3)]
-         [s (run instructions cin cout)])
-    (check-equal? (lookup s "second") (lookup s "first"))
-    (check-equal? (lookup s "third") "first"))
+   ;; test simple instruction
+   (let* ([i1 (m-i "0" (list (m-r '("first"))) '("set"))]
+          [i2 (m-i "1" (list (m-r '("second"))) '("also set"))]
+          [instructions (list i1 i2)]
+          [s (run instructions cin cout)])
+     (check-equal? (lookup s "first") "set")
+     (check-equal? (lookup s "second") "also set"))
 
-  ;; test basic concatenated lookup
-  (let* ([i1 (m-i "0" (list (m-r '("next" "0"))) '("4"))]
-         [s (run (list i1) cin cout)])
-    (check-equal? (lookup s "next$0") "4"))
+   ;; test references
+   (let* ([i1 (m-i "0" (list (m-r '("first"))) (list (m-r '("$pc"))))]
+          [i2 (m-i "1" (list (m-r '("second"))) (list (m-r '("first"))))]
+          [i3 (m-i "3" (list (m-r '("third"))) '("first"))]
+          [instructions (list i1 i2 i3)]
+          [s (run instructions cin cout)])
+     (check-equal? (lookup s "second") (lookup s "first"))
+     (check-equal? (lookup s "third") "first"))
 
-  ;; test nested lookup
-  (let* ([i1 (m-i "0" (list (m-r '("test"))) '("next"))]
-         [i2 (m-i "1" (list (m-r (list "first" (m-r '("test"))))) '("hello"))]
-         [instructions (list i1 i2)]
-         [s (run instructions cin cout)])
-    (check-equal? (lookup s "first$next") "hello"))
+   ;; test basic concatenated lookup
+   (let* ([i1 (m-i "0" (list (m-r '("next" "0"))) '("4"))]
+          [s (run (list i1) cin cout)])
+     (check-equal? (lookup s "next$0") "4"))
 
-  ;; test input
-  (let* ([i1 (m-i "0" (list (m-r '("first"))) (list (m-r '("$in"))))]
-         [i2 (m-i "2" (list (m-r '("second"))) (list (m-r '("$in"))))]
-         [i3 (m-i "5" (list (m-r '("third"))) (list (m-r '("$in"))))]
-         [instructions (list i1 i2 i3)]
-         [string-input (open-input-string "12")]
-         [s (run instructions string-input cout)])
-    (check-equal? (lookup s "first") "1")
-    (check-equal? (lookup s "second") "2")
-    (check-equal? (lookup s "third") ""))
+   ;; test nested lookup
+   (let* ([i1 (m-i "0" (list (m-r '("test"))) '("next"))]
+          [i2 (m-i "1" (list (m-r (list "first" (m-r '("test"))))) '("hello"))]
+          [instructions (list i1 i2)]
+          [s (run instructions cin cout)])
+     (check-equal? (lookup s "first$next") "hello"))
 
-  ;; test output
-  (let* ([i1 (m-i "0" (list (m-r '("$out"))) '("Hello"))]
-         [i2 (m-i "1" (list (m-r '("space"))) '(" "))]
-         [i3 (m-i "2" (list (m-r '("$out"))) (list (m-r '("space"))))]
-         [i4 (m-i "3" (list (m-r '("$out"))) '("world"))]
-         [instructions (list i1 i2 i3 i4)]
-         [string-output (open-output-string)]
-         [s (run instructions cin string-output)])
-    (check-equal? (get-output-string string-output) "Hello world")))
+   ;; test input
+   (let* ([i1 (m-i "0" (list (m-r '("first"))) (list (m-r '("$in"))))]
+          [i2 (m-i "2" (list (m-r '("second"))) (list (m-r '("$in"))))]
+          [i3 (m-i "5" (list (m-r '("third"))) (list (m-r '("$in"))))]
+          [instructions (list i1 i2 i3)]
+          [string-input (open-input-string "12")]
+          [s (run instructions string-input cout)])
+     (check-equal? (lookup s "first") "1")
+     (check-equal? (lookup s "second") "2")
+     (check-equal? (lookup s "third") ""))
+
+   ;; test output
+   (let* ([i1 (m-i "0" (list (m-r '("$out"))) '("Hello"))]
+          [i2 (m-i "1" (list (m-r '("space"))) '(" "))]
+          [i3 (m-i "2" (list (m-r '("$out"))) (list (m-r '("space"))))]
+          [i4 (m-i "3" (list (m-r '("$out"))) '("world"))]
+          [instructions (list i1 i2 i3 i4)]
+          [string-output (open-output-string)]
+          [s (run instructions cin string-output)])
+     (check-equal? (get-output-string string-output) "Hello world"))))

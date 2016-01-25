@@ -2,7 +2,6 @@
 
 (require racket/base)
 (require racket/string)
-(require rackunit)
 (provide (all-defined-out))
 
 (define-struct state (table in out [running #:mutable]))
@@ -36,26 +35,28 @@
   (define v (lookup a-state "$out"))
   (display v out))
 
-(let* ([in (open-input-string "1")]
-       [out (open-output-string)]
-       [jumps (list (cons "1" "2") (cons "2" "5"))]
-       [s (new-state jumps in out)])
+(module+ test
+  (require rackunit)
+  (let* ([in (open-input-string "1")]
+        [out (open-output-string)]
+        [jumps (list (cons "1" "2") (cons "2" "5"))]
+        [s (new-state jumps in out)])
 
-  ;; test setting and getting
-  (update! s "key" "val")
-  (check-equal? (lookup s "key") "val")
-  (update! s "key" "val2")
-  (check-equal? (lookup s "key") "val2")
-  
-  ;; test that jump pairs are included
-  (check-equal? (lookup s "1") "2")
-  (check-equal? (lookup s "2") "5")
+   ;; test setting and getting
+   (update! s "key" "val")
+   (check-equal? (lookup s "key") "val")
+   (update! s "key" "val2")
+   (check-equal? (lookup s "key") "val2")
 
-  ;; test input
-  (check-equal? (lookup s "$in") "1")
-  (check-equal? (lookup s "$in") "")
+   ;; test that jump pairs are included
+   (check-equal? (lookup s "1") "2")
+   (check-equal? (lookup s "2") "5")
 
-  ;; test output
-  (update! s "$out" "written")
-  (check-equal? (get-output-string out) "written"))
+   ;; test input
+   (check-equal? (lookup s "$in") "1")
+   (check-equal? (lookup s "$in") "")
+
+   ;; test output
+   (update! s "$out" "written")
+   (check-equal? (get-output-string out) "written")))
   

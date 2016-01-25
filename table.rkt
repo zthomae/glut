@@ -34,7 +34,7 @@
 (define (write-out a-state)
   (define out (state-out a-state))
   (define v (lookup a-state "$out"))
-  (write-string v out))
+  (display v out))
 
 (let* ([in (open-input-string "1")]
        [out (open-output-string)]

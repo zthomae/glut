@@ -1,5 +1,6 @@
 #lang racket/base
 
+(require racket/string)
 (require parser-tools/lex)
 (require parser-tools/yacc)
 (require (prefix-in re- parser-tools/lex-sre))
@@ -9,6 +10,22 @@
 
 (define-tokens value-tokens (ID STRING-LIT))
 (define-empty-tokens empty-tokens (LBR RBR EQ EOF COMMENT NEWLINE))
+
+(define (prepare-string-literal s)
+  (escape-chars (strip-quotes s)))
+
+(define (escape-chars s)
+  (define (replace-in-list l)
+    (cond [(null? l) '()]
+          [(equal? #\\ (car l))
+           (cond [(null? (cdr l)) l]
+                 [(eq? (cadr l) #\n)
+                  (cons #\newline (replace-in-list (cddr l)))]
+                 [(eq? (cadr l) #\t)
+                  (cons #\tab (replace-in-list (cddr l)))]
+                 [else (cons (car l) (replace-in-list (cdr l)))])]
+          [else (cons (car l) (replace-in-list (cdr l)))]))
+  (list->string (replace-in-list (string->list s))))
 
 (define (strip-quotes s)
   (define last (- (string-length s) 1))
@@ -25,7 +42,7 @@
    [#\] 'RBR]
    [#\= 'EQ]
    [(re-: "\"" (complement (re-: (re-~ "\\") "\"")) "\"")
-    (token-STRING-LIT (strip-quotes lexeme))]
+    (token-STRING-LIT (prepare-string-literal lexeme))]
    [(re-: ";" (re-* (re-~ "\n")) "\n") 'COMMENT]
    [(re-+ (re-~ (re-or whitespace #\[ #\] #\=)))
     (token-ID lexeme)]

@@ -36,6 +36,10 @@ concatenation. The only way to have whitespace inside a string is to
 use a string literal -- a string surrounded by double quotes. No
 brackets are interpreted as lookups inside of a string literal.
 
+Inside of a string literal, the escape sequences `\n` and `\t` are
+supported. All others are interpreted literally as a backslash
+followed by the next character.
+
 ## Statements
 
 Every statement is a global table assignment of the form `[key] =

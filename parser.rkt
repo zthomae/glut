@@ -53,11 +53,15 @@
            (begin
              (increment!)
              '())]
-          [(stmt)
+          [(stmt NEWLINE)
+           (begin
+             (increment!)
+             $1)]
+          [(stmt COMMENT)
            (begin
              (increment!)
              $1)])
-    (stmt [(lookup EQ expr NEWLINE)
+    (stmt [(lookup EQ expr)
            (make-instruction (number->string line-count) (list $1) $3)])
     (expr [() '()]
           [(STRING-LIT) (list $1)]

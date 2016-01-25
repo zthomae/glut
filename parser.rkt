@@ -61,7 +61,7 @@
    (start prgm)
    (end EOF)
    (tokens value-tokens empty-tokens)
-   (error (lambda (a b c) (void)))
+   (error (lambda (a b c) (error "Parse error")))
 
    (grammar
     (prgm [() '()]
@@ -96,4 +96,45 @@
 (module+ test
   (require rackunit)
 
-  #f)
+  (define m-i make-instruction)
+  (define m-r make-reference)
+  (define i-i instruction-index)
+  (define i-k instruction-key)
+  (define i-v instruction-val)
+  (define r-k reference-key)
+
+  (check-exn exn:fail? (lambda () (parse (open-input-string "[b]"))))
+  (check-exn exn:fail? (lambda () (parse (open-input-string "[b] = [c"))))
+  (check-exn exn:fail? (lambda () (parse (open-input-string "b = c\n"))))
+
+  (let* ([parsed (parse (open-input-string "[b] = c\n"))]
+         [inst (car parsed)]
+         [rest (cdr parsed)])
+    (check-equal? (i-i inst) "1")
+    (check-equal? (reference-key (car (i-k inst))) '("b"))
+    (check-equal? (i-v inst) '("c"))
+    (check-equal? null rest))
+
+  (let* ([parsed (parse (open-input-string "[next$1] = 0\n[dummy] = 0\n"))]
+         [i1 (car parsed)]
+         [i2 (cadr parsed)]
+         [rest (cddr parsed)])
+    (check-equal? (i-i i1) "1")
+    (check-equal? (r-k (car (i-k i1))) '("next$1"))
+    (check-equal? (i-v i1) '("0"))
+
+    (check-equal? (i-i i2) "2")
+    (check-equal? (r-k (car (i-k i2))) '("dummy"))
+    (check-equal? (i-v i2) '("0"))
+
+    (check-equal? null rest))
+
+  (let* ([parsed (parse (open-input-string "[b[c[d]]] = 0\n"))]
+         [inst (car parsed)]
+         [key (r-k (car (i-k inst)))]
+         [rest (cdr parsed)])
+    (check-equal? (i-i inst) "1")
+    (check-equal? (car key) "b")
+    (check-equal? (car (r-k (cadr key))) "c")
+    (check-equal? (car (r-k (cadr (r-k (cadr key))))) "d")
+    (check-equal? null rest)))

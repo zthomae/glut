@@ -4,12 +4,16 @@
 (require parser-tools/lex)
 (require parser-tools/yacc)
 (require (prefix-in re- parser-tools/lex-sre))
-(require "semantics.rkt")
 
-(provide parse)
+(provide parse
+         (struct-out instruction)
+         (struct-out reference))
 
 (define-tokens value-tokens (ID STRING-LIT))
 (define-empty-tokens empty-tokens (LBR RBR EQ EOF COMMENT NEWLINE))
+
+(define-struct instruction (index key val))
+(define-struct reference (key))
 
 (define (prepare-string-literal s)
   (escape-chars (strip-quotes s)))

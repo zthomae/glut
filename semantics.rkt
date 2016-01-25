@@ -3,11 +3,10 @@
 (require racket/base)
 (require racket/match)
 (require "table.rkt")
+(require "parser.rkt")
 
-(provide (all-defined-out))
-
-(define-struct instruction (index key val))
-(define-struct reference (key))
+(provide (all-defined-out)
+         (all-from-out "parser.rkt"))
 
 (define (resolve a-state key)
   (define (resolve-key k)

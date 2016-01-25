@@ -87,5 +87,9 @@
     (lookup [(LBR expr RBR) (make-reference $2)]))))
 
 (define (parse in)
-  ((glut-parser 1) (lambda () (glut-lexer in))))
+  (filter (lambda (l) (not (null? l))) ((glut-parser 1) (lambda () (glut-lexer in)))))
 
+(module+ test
+  (require rackunit)
+
+  #f)

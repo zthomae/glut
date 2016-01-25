@@ -87,5 +87,5 @@
     (lookup [(LBR expr RBR) (make-reference $2)]))))
 
 (define (parse in)
-  ((glut-parser 0) (lambda () (glut-lexer in))))
+  ((glut-parser 1) (lambda () (glut-lexer in))))
 

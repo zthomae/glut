@@ -1,5 +1,3 @@
-#!/usr/bin/env racket
-
 #lang racket/base
 
 (require racket/cmdline)
@@ -11,6 +9,6 @@
     (filter (lambda (l) (not (null? l)))
             (parse (open-input-file (vector-ref (current-command-line-arguments) 0)))))
   (run parsed (current-input-port) (current-output-port))
-  (displayln ""))
+  (void))
 
 (main)

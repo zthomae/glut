@@ -122,6 +122,6 @@
          [i3 (m-i "2" (list (m-r '("$out"))) (list (m-r '("space"))))]
          [i4 (m-i "3" (list (m-r '("$out"))) '("world"))]
          [instructions (list i1 i2 i3 i4)]
-         [string-output (open-output-string)])
-    (let ([s (run instructions cin string-output)])
-      (check-equal? (get-output-string string-output) "Hello world"))))
+         [string-output (open-output-string)]
+         [s (run instructions cin string-output)])
+    (check-equal? (get-output-string string-output) "Hello world")))

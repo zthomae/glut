@@ -65,7 +65,7 @@ as the program is running:
 1. Evaluate instruction `$pc`
 2. Set `$pc` to the value stored in `[next[$pc]]`.
 
-The values `[next$pc]` are initialized at startup to store the
+The values `[next[$pc]]` are initialized at startup to store the
 immediate next instruction number for each instruction `$pc`. The
 instruction number refers to the line number in the source file. The
 instructions themselves are not stored in the global table.

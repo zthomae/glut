@@ -3,6 +3,8 @@
 **G**iant **L**ook**U**p **T**able is an esoteric programming language
 with only one kind of statement: Setting a value in a hash table.
 
+**DISCLAIMER: The language specification is not final.**
+
 ## Usage
 
 ```
@@ -35,7 +37,7 @@ in the table under `a` and `b`, respectively
 * `[[a][b]]`: The value in the table stored under the key `a'$b'`
 * `1[a]`: The string `1$a'`
 * `[1[a]]`: The value in the table stored under the key `1$a'`
-* `[[a]1]`: The value in the table stored under th ekey `a'$1`
+* `[[a]1]`: The value in the table stored under the key `a'$1`
 
 Whitespace inside of an expression is interpreted as
 concatenation. The only way to have whitespace inside a string is to

@@ -18,6 +18,9 @@
 (define (prepare-string-literal s)
   (escape-chars (strip-quotes s)))
 
+;; the lexer won't combine escape-sequence characters. this
+;; finds backslashes followed by newlines, or tabs and replaces
+;; them with their escaped counterparts
 (define (escape-chars s)
   (define (replace-in-list l)
     (cond [(null? l) '()]
@@ -31,6 +34,8 @@
           [else (cons (car l) (replace-in-list (cdr l)))]))
   (list->string (replace-in-list (string->list s))))
 
+;; string literals are parsed with the double quotes still attached.
+;; this removes them
 (define (strip-quotes s)
   (define last (- (string-length s) 1))
   (define start
@@ -39,6 +44,8 @@
     (if (eq? #\" (string-ref s last)) last (+ 1 last)))
   (substring s start end))
 
+;; lexer returns a function that, when called with an input source,
+;; returns a generator of tokens.
 (define glut-lexer
   (lexer
    [#\newline 'NEWLINE]
@@ -54,6 +61,9 @@
    [whitespace (glut-lexer input-port)]
    [(eof) 'EOF]))
 
+;; parser returns a function that, when given a thunk calling a lexer
+;; with an input source, returns a parsed result (if there is one). In
+;; this case, it returns a list.
 (define (glut-parser)
   (define line-count 1)
   (define (increment!)
@@ -91,6 +101,7 @@
           [(lookup expr) (cons $1 $2)])
     (lookup [(LBR expr RBR) (make-reference $2)]))))
 
+;; parse wraps lexing and parsing in a way suitable for export
 (define (parse in)
   (filter (lambda (l) (not (null? l))) ((glut-parser) (lambda () (glut-lexer in)))))
 

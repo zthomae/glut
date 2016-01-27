@@ -4,25 +4,33 @@
 (require racket/string)
 (provide (all-defined-out))
 
-(define-struct state (table in out [running #:mutable]))
+(define-struct state (table in out [running #:mutable]) #:transparent)
 
+;; new-state wraps the generated make-state function with
+;; correct initialization
 (define (new-state jump-pairs in out)
   (make-state (make-hash jump-pairs) in out #t))
 
+;; concat joins keys, as per the spec, with $
 (define (concat . keys)
   (string-join (filter non-empty-string? keys) "$"))
 
+;; lookup wraps a basic hash-table lookup to read from
+;; input and stop the machine on an invalid key
 (define (lookup a-state key)
   (define (die) (set-state-running! a-state #f))
   (define table (state-table a-state))
   (when (equal? key "$in") (read-in! a-state))
   (hash-ref table key die))
 
+;; update! wraps hash-table setting to write to output
 (define (update! a-state key val)
   (define table (state-table a-state))
   (hash-set! table key val)
   (when (equal? key "$out") (write-out a-state)))
 
+;; reads a character from input and places it in the table
+;; under key $in
 (define (read-in! a-state)
   (define in (state-in a-state))
   (define c (read-char in))
@@ -30,6 +38,7 @@
       (update! a-state "$in" "")
       (update! a-state "$in" (make-string 1 c))))
 
+;; writes the value in the table under key $out to output
 (define (write-out a-state)
   (define out (state-out a-state))
   (define v (lookup a-state "$out"))

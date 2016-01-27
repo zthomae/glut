@@ -8,6 +8,8 @@
 (provide (all-defined-out)
          (all-from-out "parser.rkt"))
 
+;; looks up a key in the table. the key is possibly compound and also
+;; may contain references to look up
 (define (resolve a-state key)
   (define (resolve-key k)
     (match k
@@ -19,12 +21,17 @@
         (cons (resolve-key (car ks)) (resolve-inner (cdr ks)))))
   (apply concat (resolve-inner key)))
 
+;; execute an instruction: set the value stored in the table under the
+;; instruction's key to the instruction's value
 (define (execute-instr a-state an-instruction)
   (define key (resolve a-state (reference-key (car (instruction-key an-instruction)))))
   (define val (resolve a-state (instruction-val an-instruction)))
   (update! a-state key val))
 
+;; run starts the machine with a list of instructions and input and output
+;; ports and runs it to completion
 (define (run instructions in out)
+  ;; instructions are hashed with their indices for faster lookup
   (define (hash-instructions)
     (define h (make-hash))
     (define (add-entry xs)
@@ -35,6 +42,9 @@
             (add-entry (cdr xs)))))
     (add-entry instructions))
   (define hashed (hash-instructions))
+
+  ;; run-machine executes instructions in a loop until the
+  ;; program terminates
   (define (run-machine a-state)
     (define (die) (set-state-running! a-state #f))
     (define (get-instruction i)
@@ -53,12 +63,17 @@
       (define first-instruction (instruction-index (car instructions)))
       (update! a-state "$pc" first-instruction)
       (step first-instruction)))
+
+  ;; start the machine: construct the initial jump table, make a new
+  ;; state, and start executing
   (define (start)
     (define jumps (make-jumps instructions))
     (define a-state (new-state jumps in out))
     (run-machine a-state))
+  
   (start))
 
+;; construct the initial jump table from instruction line numbers
 (define (make-jumps instructions)
   (if (or (null? instructions) (null? (cdr instructions)))
       '()

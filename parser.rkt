@@ -12,8 +12,8 @@
 (define-tokens value-tokens (ID STRING-LIT))
 (define-empty-tokens empty-tokens (LBR RBR EQ EOF COMMENT NEWLINE))
 
-(define-struct instruction (index key val))
-(define-struct reference (key))
+(define-struct instruction (index key val) #:transparent)
+(define-struct reference (key) #:transparent)
 
 (define (prepare-string-literal s)
   (escape-chars (strip-quotes s)))

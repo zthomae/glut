@@ -54,7 +54,8 @@
    [whitespace (glut-lexer input-port)]
    [(eof) 'EOF]))
 
-(define (glut-parser line-count)
+(define (glut-parser)
+  (define line-count 1)
   (define (increment!)
     (set! line-count (+ line-count 1)))
   (parser
@@ -91,7 +92,7 @@
     (lookup [(LBR expr RBR) (make-reference $2)]))))
 
 (define (parse in)
-  (filter (lambda (l) (not (null? l))) ((glut-parser 1) (lambda () (glut-lexer in)))))
+  (filter (lambda (l) (not (null? l))) ((glut-parser) (lambda () (glut-lexer in)))))
 
 (module+ test
   (require rackunit)

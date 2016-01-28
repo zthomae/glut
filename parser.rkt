@@ -65,9 +65,9 @@
 ;; with an input source, returns a parsed result (if there is one). In
 ;; this case, it returns a list.
 (define (glut-parser)
-  (define line-count 1)
-  (define (increment!)
-    (set! line-count (+ line-count 1)))
+  (define current-line 1)
+  (define (next-line!)
+    (set! current-line (+ current-line 1)))
   (parser
    (start prgm)
    (end EOF)
@@ -79,22 +79,22 @@
           [(line prgm) (cons $1 $2)])
     (line [(NEWLINE)
            (begin
-             (increment!)
+             (next-line!)
              '())]
           [(COMMENT)
            (begin
-             (increment!)
+             (next-line!)
              '())]
           [(stmt NEWLINE)
            (begin
-             (increment!)
+             (next-line!)
              $1)]
           [(stmt COMMENT)
            (begin
-             (increment!)
+             (next-line!)
              $1)])
     (stmt [(lookup EQ expr)
-           (make-instruction (number->string line-count) (list $1) $3)])
+           (make-instruction (number->string current-line) (list $1) $3)])
     (expr [() '()]
           [(STRING-LIT) (list $1)]
           [(ID expr) (cons $1 $2)]

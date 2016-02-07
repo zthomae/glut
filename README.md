@@ -11,6 +11,12 @@ with only one kind of statement: Setting a value in a hash table.
 $ racket glut.rkt [program_file]
 ```
 
+## Notice
+
+Most work is being done in the
+[glut-js repo](https://github.com/zthomae/glut-js), where I am making
+a web application for simulating **glut** programs.
+
 ## Expressions
 
 An expression in **glut** is either a string (the only primitive type

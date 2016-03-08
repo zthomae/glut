@@ -12,7 +12,7 @@
      [("-p" "--print-parsed") "Print parsed program" (print-parsed #t)]
      #:args (filename)
      filename))
-  (run (parse (open-input-file file-to-run) print-parsed)
+  (run (parse (open-input-file file-to-run) (print-parsed))
        (current-input-port)
        (current-output-port))
   (void))

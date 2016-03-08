@@ -140,4 +140,13 @@
           [instructions (list i1 i2 i3 i4)]
           [string-output (open-output-string)]
           [s (run instructions cin string-output)])
-     (check-equal? (get-output-string string-output) "Hello world"))))
+     (check-equal? (get-output-string string-output) "Hello world"))
+
+   ;; test input string containing [
+   (let* ([i0 (m-i "0" (list (m-r '("i"))) '("1"))]
+          [i1 (m-i "1" (list (m-r '("$out"))) '("[mod$"))]
+          [i2 (m-i "2" (list (m-r '("$out"))) (list (m-r '("i"))))]
+          [string-output (open-output-string)]
+          [s (run (list i0 i1 i2) cin string-output)])
+     (check-equal? (lookup s "i") "1")
+     (check-equal? (get-output-string string-output) "[mod$1"))))

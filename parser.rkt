@@ -52,7 +52,7 @@
    [#\[ 'LBR]
    [#\] 'RBR]
    [#\= 'EQ]
-   [(re-: "\"" (complement (re-: (re-~ "\\") "\"")) "\"")
+   [(re-: "\"" (complement (re-: any-string "\"" any-string)) "\"")
     (token-STRING-LIT (prepare-string-literal lexeme))]
    [(re-: ";" (re-* (re-~ "\n")) "\n") 'COMMENT]
    [(re-+ (re-~ (re-or whitespace #\[ #\] #\=)))
@@ -153,4 +153,12 @@
     (check-equal? (car key) "b")
     (check-equal? (car (r-k (cadr key))) "c")
     (check-equal? (car (r-k (cadr (r-k (cadr key))))) "d")
-    (check-equal? null rest)))
+    (check-equal? null rest))
+
+  (let* ([parsed (parse (open-input-string "[$out] = \"[mod$\"\n[$out] = \"i\"\n"))]
+         [inst (car parsed)]
+         [key (r-k (car (i-k inst)))]
+         [rest (cdr parsed)])
+    (check-equal? (i-i inst) "1")
+    (check-equal? (car key) "$out")
+    (check-equal? (i-v inst) '("[mod$"))))

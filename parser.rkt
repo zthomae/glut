@@ -205,11 +205,13 @@
                    (begin
                      (next-token!)
                      (list (make-reference next-expr)))]
-                  [(and (pair? current-token) (eq? (car current-token) 'ID))
-                   (let ([tok current-token])
-                     (next-token!)
-                     (append (list tok) (expr)))]
-                (parse-error "Parse error -- lookup expected RBR, got"))))
+                  [(pair? current-token)
+                   (let ([res (list (make-reference (append next-expr (expr))))])
+                     (if (eq? current-token 'RBR)
+                         (begin
+                           (next-token!)
+                           res)
+                         (parse-error "Parse error -- lookup expected RBR, got")))])))
         (begin
           (parse-error "Parse error -- lookup expected LBR, got"))))
 
@@ -281,4 +283,9 @@
          [inst (car parsed)])
     (check-equal? (car (r-k (car (i-v inst)))) "mod")
     (check-equal? (car (r-k (cadr (r-k (car (i-v inst)))))) "i")
-    (check-equal? (caddr (r-k (car (i-v inst)))) "3")))
+    (check-equal? (caddr (r-k (car (i-v inst)))) "3"))
+
+  (let* ([parsed (parse "[m1] = [hello][thing]\n")]
+         [inst (car parsed)])
+    (check-equal? (car (r-k (car (i-v inst)))) "hello")
+    (check-equal? (car (r-k (cadr (i-v inst)))) "thing")))

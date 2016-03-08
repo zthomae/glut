@@ -127,6 +127,9 @@
   (define (next-token!) (set! current-token (get-token)))
   (define (increment-line!) (set! current-line (+ current-line 1)))
 
+  (define (parse-error msg)
+    (error (number->string current-line) msg current-token))
+
   (define (program)
     (if (not (eq? current-token 'EOF))
         (append (line) (program))
@@ -148,7 +151,7 @@
                         (next-token!)
                         (increment-line!)
                         (list next-stmt))
-                      (error "Parse error")))]))
+                      (parse-error "Parse error -- line expected COMMENT or NEWLINE, got")))]))
 
   (define (stmt)
     (if (eq? current-token 'LBR)
@@ -160,8 +163,8 @@
                   (make-instruction (number->string current-line)
                                     next-lookup
                                     next-expr)))
-              (error "Parse error -- stmt expected EQ, got" current-token)))
-        (error "Parse error -- stmt expected LBR, got" current-token)))
+              (parse-error "Parse error -- stmt expected EQ, got")))
+        (parse-error "Parse error -- stmt expected LBR, got")))
 
   (define (expr)
     (if (pair? current-token)
@@ -169,7 +172,7 @@
                (let ([id (list (cdr current-token))])
                  (next-token!)
                  (if (or (eq? current-token 'LBR)
-                         (and (list? current-token)
+                         (and (pair? current-token)
                               (or (eq? (car current-token) 'ID)
                                   (eq? (car current-token) 'STRINGLIT))))
                      (append id (expr))
@@ -178,7 +181,7 @@
                (let ([lit (list (cdr current-token))])
                  (next-token!)
                  (if (or (eq? current-token 'LBR)
-                         (and (list? current-token)
+                         (and (pair? current-token)
                               (or (eq? (car current-token) 'ID)
                                   (eq? (car current-token) 'STRINGLIT))))
                      (append lit (expr))
@@ -186,25 +189,29 @@
         (if (eq? current-token 'LBR)
             (let ([next-lookup (lookup)])
               (if (or (eq? current-token 'LBR)
-                      (and (list? current-token)
+                      (and (pair? current-token)
                            (or (eq? (car current-token) 'ID)
                                (eq? (car current-token) 'STRINGLIT))))
                   (append next-lookup (expr))
                   next-lookup))
-            (error "Parse error -- expr expected LBR, got" current-token))))
+            (parse-error "Parse error -- expr expected LBR, got"))))
 
   (define (lookup)
     (if (eq? current-token 'LBR)
         (begin
           (next-token!)
           (let ([next-expr (expr)])
-            (if (eq? current-token 'RBR)
-                (begin
-                  (next-token!)
-                  (list (make-reference next-expr)))
-                (error "Parse error -- lookup expected RBR, got" current-token))))
+            (cond [(eq? current-token 'RBR)
+                   (begin
+                     (next-token!)
+                     (list (make-reference next-expr)))]
+                  [(and (pair? current-token) (eq? (car current-token) 'ID))
+                   (let ([tok current-token])
+                     (next-token!)
+                     (append (list tok) (expr)))]
+                (parse-error "Parse error -- lookup expected RBR, got"))))
         (begin
-          (error "Parse error -- lookup expected LBR, got" current-token))))
+          (parse-error "Parse error -- lookup expected LBR, got"))))
 
   program)
 
@@ -268,4 +275,10 @@
          [rest (cdr parsed)])
     (check-equal? (i-i inst) "1")
     (check-equal? (car key) "$out")
-    (check-equal? (i-v inst) '("[mod$"))))
+    (check-equal? (i-v inst) '("[mod$")))
+
+  (let* ([parsed (parse "[m1] = [mod[i]3]\n")]
+         [inst (car parsed)])
+    (check-equal? (car (r-k (car (i-v inst)))) "mod")
+    (check-equal? (car (r-k (cadr (r-k (car (i-v inst)))))) "i")
+    (check-equal? (caddr (r-k (car (i-v inst)))) "3")))

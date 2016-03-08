@@ -1,0 +1,4 @@
+; echoes command line input forever
+
+[$out] = [$in]
+[next[$pc]] = 3

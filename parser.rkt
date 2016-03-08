@@ -102,8 +102,12 @@
     (lookup [(LBR expr RBR) (make-reference $2)]))))
 
 ;; parse wraps lexing and parsing in a way suitable for export
-(define (parse in)
-  (filter (lambda (l) (not (null? l))) ((glut-parser) (lambda () (glut-lexer in)))))
+(define (parse in [debug #f])
+  (let ([parsed (filter (lambda (l) (not (null? l)))
+                        ((glut-parser) (lambda () (glut-lexer in))))])
+    (when debug
+      (displayln parsed))
+    parsed))
 
 (module+ test
   (require rackunit)

@@ -30,6 +30,8 @@
                   (cons #\newline (replace-in-list (cddr l)))]
                  [(eq? (cadr l) #\t)
                   (cons #\tab (replace-in-list (cddr l)))]
+                 [(or (eq? (cadr l) #\") (eq? (cadr l) #\\))
+                  (cons (cadr l) (replace-in-list (cddr l)))]
                  [else (cons (car l) (replace-in-list (cdr l)))])]
           [else (cons (car l) (replace-in-list (cdr l)))]))
   (list->string (replace-in-list (string->list s))))

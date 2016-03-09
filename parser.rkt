@@ -15,9 +15,6 @@
 (define-struct instruction (index key val) #:transparent)
 (define-struct reference (key) #:transparent)
 
-(define (prepare-string-literal s)
-  (escape-chars (strip-quotes s)))
-
 ;; the lexer won't combine escape-sequence characters. this
 ;; finds backslashes followed by newlines, or tabs and replaces
 ;; them with their escaped counterparts
@@ -35,16 +32,6 @@
                  [else (cons (car l) (replace-in-list (cdr l)))])]
           [else (cons (car l) (replace-in-list (cdr l)))]))
   (list->string (replace-in-list (string->list s))))
-
-;; string literals are parsed with the double quotes still attached.
-;; this removes them
-(define (strip-quotes s)
-  (define last (- (string-length s) 1))
-  (define start
-    (if (eq? #\" (string-ref s 0)) 1 0))
-  (define end
-    (if (eq? #\" (string-ref s last)) last (+ 1 last)))
-  (substring s start end))
 
 ;; lexer returns a function that, when called with an input source,
 ;; returns a generator of tokens.
@@ -73,7 +60,7 @@
     (if (eq? p 'EOF)
         (error "Syntax error")
         (begin (increment-position!)
-               (prepare-string-literal (substring input start (- current-position 1))))))
+               (escape-chars (substring input start (- current-position 1))))))
   (define (get-identifier)
     (define start current-position)
     (define p (peek current-position))

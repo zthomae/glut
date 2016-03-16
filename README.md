@@ -63,9 +63,14 @@ ignored.
 Input and output is handled by reading from and assigning to special
 keys. The lookup `[$in]` will result in a single character being read
 from standard input, and will evaluate to this character represented
-as a string. The character will also be stored in `[$in]`. Assigning
-to `[$out]` will cause that statement's value to be written to
-standard output after the value is stored in `[$out]`.
+as a string. The character will also be stored in `[$in]`. If no character
+is available, then `[$in]` will contain an empty string. After reading
+input is attempted, a location `[$eof]` will also be written to: If
+end-of-file has been reached, it will contain a `1`, and will contain a
+`0` otherwise.
+
+Assigning to `[$out]` will cause that statement's value to be written
+to standard output after the value is stored in `[$out]`.
 
 Any line which is either empty or begins with a semicolon is ignored.
 

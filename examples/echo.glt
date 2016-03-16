@@ -1,4 +1,5 @@
 ; echoes command line input forever
 
+[jmp0] = [$pc]
 [$out] = [$in]
-[next[$pc]] = 3
+[next[$pc]] = [jmp[$eof]]

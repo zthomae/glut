@@ -13,7 +13,7 @@
 
 ;; concat joins keys, as per the spec, with $
 (define (concat . keys)
-  (string-join (filter non-empty-string? keys) "$"))
+  (string-join (filter non-empty-string? keys) ""))
 
 ;; lookup wraps a basic hash-table lookup to read from
 ;; input and stop the machine on an invalid key
@@ -67,5 +67,8 @@
 
    ;; test output
    (update! s "$out" "written")
-   (check-equal? (get-output-string out) "written")))
+   (check-equal? (get-output-string out) "written"))
+
+  ;; test concatenation
+  (check-equal? (concat "a" "b" "c") "abc"))
   

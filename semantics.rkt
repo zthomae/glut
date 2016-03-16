@@ -112,14 +112,14 @@
    ;; test basic concatenated lookup
    (let* ([i1 (m-i "0" (list (m-r '("next" "0"))) '("4"))]
           [s (run (list i1) cin cout)])
-     (check-equal? (lookup s "next$0") "4"))
+     (check-equal? (lookup s "next0") "4"))
 
    ;; test nested lookup
    (let* ([i1 (m-i "0" (list (m-r '("test"))) '("next"))]
           [i2 (m-i "1" (list (m-r (list "first" (m-r '("test"))))) '("hello"))]
           [instructions (list i1 i2)]
           [s (run instructions cin cout)])
-     (check-equal? (lookup s "first$next") "hello"))
+     (check-equal? (lookup s "firstnext") "hello"))
 
    ;; test input
    (let* ([i1 (m-i "0" (list (m-r '("first"))) (list (m-r '("$in"))))]

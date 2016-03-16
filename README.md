@@ -38,12 +38,12 @@ corresponding to a single global lookup.
 
 ### Nested-lookup examples
 
-* `[a][b]`: The string `a'$b'`, where `a'` and `b'` are the values stored
+* `[a][b]`: The string `a'b'`, where `a'` and `b'` are the values stored
 in the table under `a` and `b`, respectively
-* `[[a][b]]`: The value in the table stored under the key `a'$b'`
-* `1[a]`: The string `1$a'`
-* `[1[a]]`: The value in the table stored under the key `1$a'`
-* `[[a]1]`: The value in the table stored under the key `a'$1`
+* `[[a][b]]`: The value in the table stored under the key `a'b'`
+* `1[a]`: The string `1a'`
+* `[1[a]]`: The value in the table stored under the key `1a'`
+* `[[a]1]`: The value in the table stored under the key `a'1`
 
 Whitespace inside of an expression is interpreted as
 concatenation. The only way to have whitespace inside a string is to

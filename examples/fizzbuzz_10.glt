@@ -1,63 +1,63 @@
 ; increment table
-[inc$0] = 1
-[inc$1] = 2
-[inc$2] = 3
-[inc$3] = 4
-[inc$4] = 5
-[inc$5] = 6
-[inc$6] = 7
-[inc$7] = 8
-[inc$8] = 9
-[inc$9] = 10
+[inc0] = 1
+[inc1] = 2
+[inc2] = 3
+[inc3] = 4
+[inc4] = 5
+[inc5] = 6
+[inc6] = 7
+[inc7] = 8
+[inc8] = 9
+[inc9] = 10
 
 ; modulus table
-[mod$1$3] = 1
-[mod$1$5] = 1
-[mod$2$3] = 2
-[mod$2$5] = 2
-[mod$3$3] = 0
-[mod$3$5] = 3
-[mod$4$3] = 1
-[mod$4$5] = 4
-[mod$5$3] = 2
-[mod$5$5] = 0
-[mod$6$3] = 0
-[mod$6$5] = 1
-[mod$7$3] = 1
-[mod$7$5] = 2
-[mod$8$3] = 2
-[mod$8$5] = 3
-[mod$9$3] = 0
-[mod$9$5] = 4
-[mod$10$3] = 1
-[mod$10$5] = 0
+[mod1$3] = 1
+[mod1$5] = 1
+[mod2$3] = 2
+[mod2$5] = 2
+[mod3$3] = 0
+[mod3$5] = 3
+[mod4$3] = 1
+[mod4$5] = 4
+[mod5$3] = 2
+[mod5$5] = 0
+[mod6$3] = 0
+[mod6$5] = 1
+[mod7$3] = 1
+[mod7$5] = 2
+[mod8$3] = 2
+[mod8$5] = 3
+[mod9$3] = 0
+[mod9$5] = 4
+[mod10$3] = 1
+[mod10$5] = 0
 
 ; fb table
 ; 3: fizzbuzz
 ; 2: buzz
 ; 1: fizz
 ; 0: number
-[fb$0$0] = 3
-[fb$0$1] = 1
-[fb$0$2] = 1
-[fb$0$3] = 1
-[fb$0$4] = 1
-[fb$1$0] = 2
-[fb$1$1] = 0
-[fb$1$2] = 0
-[fb$1$3] = 0
-[fb$1$4] = 0
-[fb$2$0] = 2
-[fb$2$1] = 0
-[fb$2$2] = 0
-[fb$2$3] = 0
-[fb$2$4] = 0
+[fb00] = 3
+[fb01] = 1
+[fb02] = 1
+[fb03] = 1
+[fb04] = 1
+[fb10] = 2
+[fb11] = 0
+[fb12] = 0
+[fb13] = 0
+[fb14] = 0
+[fb20] = 2
+[fb21] = 0
+[fb22] = 0
+[fb23] = 0
+[fb24] = 0
 
 ; messages table, for printing.
-; note: don't fill in msg$0 here. that gets filled in during the main loop
-[msg$1] = Fizz
-[msg$2] = Buzz
-[msg$3] = FizzBuzz
+; note: don't fill in msg0 here. that gets filled in during the main loop
+[msg1] = Fizz
+[msg2] = Buzz
+[msg3] = FizzBuzz
 
 ; init
 [i] = 0
@@ -65,9 +65,9 @@
 ; main loop. program will terminate when [inc[i]] doesn't exist
 [loop] = [$pc] ; lookup pc so we don't have to hardcode it
 [i] = [inc[i]]
-[msg$0] = [i]
-[m1] = [mod[i]3]
-[m2] = [mod[i]5]
+[msg0] = [i]
+[m1] = [mod[i]$3]
+[m2] = [mod[i]$5]
 [msg] = [fb[m1][m2]]
 [$out] = [msg[msg]]
 [$out] = "\n"

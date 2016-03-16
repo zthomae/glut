@@ -130,7 +130,16 @@
           [s (run instructions string-input cout)])
      (check-equal? (lookup s "first") "1")
      (check-equal? (lookup s "second") "2")
-     (check-equal? (lookup s "third") ""))
+     (check-equal? (lookup s "third") "")
+     (check-equal? (lookup s "$eof") "1"))
+
+   ;; test incomplete input
+   (let* ([i1 (m-i "0" (list (m-r '("first"))) (list (m-r '("$in"))))]
+          [instructions (list i1)]
+          [string-input (open-input-string "12")]
+          [s (run instructions string-input cout)])
+     (check-equal? (lookup s "first") "1")
+     (check-equal? (lookup s "$eof") "0"))
 
    ;; test output
    (let* ([i1 (m-i "0" (list (m-r '("$out"))) '("Hello"))]
@@ -142,7 +151,7 @@
           [s (run instructions cin string-output)])
      (check-equal? (get-output-string string-output) "Hello world"))
 
-   ;; test input string containing [
+   ;; test output string containing [
    (let* ([i0 (m-i "0" (list (m-r '("i"))) '("1"))]
           [i1 (m-i "1" (list (m-r '("$out"))) '("[mod$"))]
           [i2 (m-i "2" (list (m-r '("$out"))) (list (m-r '("i"))))]

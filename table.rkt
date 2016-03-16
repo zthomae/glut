@@ -35,8 +35,12 @@
   (define in (state-in a-state))
   (define c (read-char in))
   (if (eof-object? c)
-      (update! a-state "$in" "")
-      (update! a-state "$in" (make-string 1 c))))
+      (begin
+        (update! a-state "$eof" "1")
+        (update! a-state "$in" ""))
+      (begin
+        (update! a-state "$eof" "0")
+        (update! a-state "$in" (make-string 1 c)))))
 
 ;; writes the value in the table under key $out to output
 (define (write-out a-state)
@@ -63,7 +67,9 @@
 
    ;; test input
    (check-equal? (lookup s "$in") "1")
+   (check-equal? (lookup s "$eof") "0")
    (check-equal? (lookup s "$in") "")
+   (check-equal? (lookup s "$eof") "1")
 
    ;; test output
    (update! s "$out" "written")

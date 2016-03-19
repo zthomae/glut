@@ -1,3 +1,8 @@
+;; NOTE: The lexer and parser are literal translations of their
+;; counterparts from the javascript implementation. This is done
+;; to make it easier to migrate changes from one to the other,
+;; even though it results in unidiomatic and ugly code here.
+
 #lang racket/base
 
 (require racket/string)

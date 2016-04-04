@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require parsack)
+(require racket/pretty)
 
 (provide (rename-out [parse-program parse])
          (struct-out instruction)
@@ -18,11 +19,29 @@
                              (return #\")))
         (noneOf "\"")))
 
+;; the parser won't combine escape-sequence characters. this
+;; finds backslashes followed by newlines, or tabs and replaces
+;; them with their escaped counterparts
+(define (escape-chars s)
+  (define (replace-in-list l)
+    (cond [(null? l) '()]
+          [(equal? #\\ (car l))
+           (cond [(null? (cdr l)) l]
+                 [(eq? (cadr l) #\n)
+                  (cons #\newline (replace-in-list (cddr l)))]
+                 [(eq? (cadr l) #\t)
+                  (cons #\tab (replace-in-list (cddr l)))]
+                 [(or (eq? (cadr l) #\") (eq? (cadr l) #\\))
+                  (cons (cadr l) (replace-in-list (cddr l)))]
+                 [else (cons (car l) (replace-in-list (cdr l)))])]
+          [else (cons (car l) (replace-in-list (cdr l)))]))
+  (list->string (replace-in-list (string->list s))))
+
 (define string-literal
   (parser-compose (char #\")
                   (str <- (many string-char))
                   (char #\")
-                  (return (list->string str))))
+                  (return (escape-chars (list->string str)))))
 
 (define identifier (many1 (noneOf "\"\t\n[]=; ")))
 
@@ -92,8 +111,10 @@
                       (instruction-key inst)
                       (instruction-val inst))))
 
-(define (parse-program in)
-  (correct-lines (parse-result program in)))
+(define (parse-program in [print-parsed #f])
+  (define parsed (correct-lines (parse-result program in)))
+  (when print-parsed (pretty-print parsed))
+  parsed)
 
 (module+ test
   (require rackunit)

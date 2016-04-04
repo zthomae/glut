@@ -75,7 +75,7 @@
 
 (define comment
   (parser-compose (char #\;)
-                  (many (noneOf "\n"))
+                  (many (noneOf "\r\n"))
                   (return null)))
 
 (define (and-newline p)
@@ -87,7 +87,7 @@
 (define full-statement
   (parser-compose (stmt <- statement)
                   whitespace
-                  (<or> (and-newline comment) $eol)
+                  (<or> (and-newline comment) $eol $eof)
                   (return stmt)))
 
 (define line

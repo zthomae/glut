@@ -1,6 +1,6 @@
 # glut
 
-**G**iant **L**ook**U**p **T**able is an esoteric programming language
+**G**iant **L**ook **U**p **T**able is an esoteric programming language
 with only one kind of statement: Setting a value in a hash table.
 
 **DISCLAIMER: The language specification is not final.**

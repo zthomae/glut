@@ -5,12 +5,6 @@ with only one kind of statement: Setting a value in a hash table.
 
 **DISCLAIMER: The language specification is not final.**
 
-## Usage
-
-```
-$ racket glut.rkt [program_file]
-```
-
 ## Expressions
 
 An expression in **glut** is either a string (the only primitive type
@@ -94,9 +88,6 @@ put there.
 ## Notes
 
 The interpreter in this repository is not finished and is not bug-free.
-
-Also check out the [glut-js repo](https://github.com/zthomae/glut-js),
-where I am making a web application for simulating **glut** programs.
 
 ## License
 

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>glut simulator</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div id="root">
+      <div id="top-pane">
+        <div id="data">
+          <div id="code" contentEditable="true"></div>
+          <div id="controls">
+            <button id="step">Step</button>
+            <button id="restart">Restart</button>
+            <button id="run">Run</button>
+            <button id="edit">Edit</button>
+            <button id="stop">Stop</button>
+            <div id="pc-wrapper">
+              <input type="text" id="pc"/>
+            </div>
+          </div>
+        </div>
+        <div id="result">
+          <div>
+            <div class="heading">
+              <span>Key</span>
+            </div>
+            <div class="heading">
+              <span>Value</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="bottom-pane">
+        <div id="input" contentEditable="true"></div>
+        <div id="output"><pre></pre></div>
+      </div>
+    </div>
+    <script src="bundle.js"></script>
+  </body>
+</html>

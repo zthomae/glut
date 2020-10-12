@@ -1,8 +1,4 @@
-import * as Parse from "./parse";
-
-const Tokens = Parse.Tokens;
-const lexer = Parse.lexer;
-const parser = Parse.parser;
+import { Tokens, lexer, parser } from "./parse";
 
 describe("Lexer", () => {
   const getAllTokens = function (getToken) {

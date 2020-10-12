@@ -1,105 +1,100 @@
-module.exports = (function() {
-  'use strict';
+export const Tokens = {
+  NEWLINE: "NEWLINE",
+  LBR: "LEFT BRACKET",
+  RBR: "RIGHT BRACKET",
+  EQ: "EQUALS",
+  COMMENT: "COMMENT",
+  ID: "IDENTIFIER",
+  STRINGLIT: "STRING LITERAL",
+  EOF: "EOF",
+};
 
-  var Parse = {};
+// Given an input string, return a generator of tokens.
+// Will continue to generate EOF after the input is fully lexed.
+export const lexer = (input) => {
+  const len = input.length;
+  let currentPos = 0;
 
-  var Tokens = Parse.Tokens = {
-    NEWLINE: "NEWLINE",
-    LBR: "LEFT BRACKET",
-    RBR: "RIGHT BRACKET",
-    EQ: "EQUALS",
-    COMMENT: "COMMENT",
-    ID: "IDENTIFIER",
-    STRINGLIT: "STRING LITERAL",
-    EOF: "EOF"
+  const peek = (i) => {
+    if (i >= len) {
+      return Tokens.EOF;
+    } else {
+      return input[i];
+    }
   };
 
-  // Given an input string, return a generator of tokens Will continue
-  // to generate EOF after the input is fully lexed.
-  Parse.lexer = function(input) {
-    var len = input.length;
-    var currentPos = 0;
-
-    var peek = function(i) {
-      if (i >= len) {
-        return Tokens.EOF;
-      } else {
-        return input[i];
-      }
-    };
-
-    var escapeChars = function(s) {
-      if (s.length === 0) {
-        return s;
-      } else if (s[0] === '\\') {
-        if (s[1] === 'n') {
-          return '\n' + escapeChars(s.substring(2));
-        } else if (s[1] === 't') {
-          return '\t' + escapeChars(s.substring(2));
-        } else if (s[1] === '"' || s[1] === '\\') {
-          return s[1] + escapeChars(s.substring(2));
-        } else {
-          return s[0] + escapeChars(s.substring(1));
-        }
+  const escapeChars = (s) => {
+    if (s.length === 0) {
+      return s;
+    } else if (s[0] === "\\") {
+      if (s[1] === "n") {
+        return "\n" + escapeChars(s.substring(2));
+      } else if (s[1] === "t") {
+        return "\t" + escapeChars(s.substring(2));
+      } else if (s[1] === '"' || s[1] === "\\") {
+        return s[1] + escapeChars(s.substring(2));
       } else {
         return s[0] + escapeChars(s.substring(1));
       }
-    };
+    } else {
+      return s[0] + escapeChars(s.substring(1));
+    }
+  };
 
-    var getStringLiteral = function() {
-      var escaping = false;
+  const getStringLiteral = () => {
+    let escaping = false;
+    currentPos++;
+    let start = currentPos;
+    let p = peek(currentPos);
+    while (p !== Tokens.EOF && !(p === '"' && !escaping)) {
+      escaping = p === "\\";
       currentPos++;
-      var start = currentPos;
-      var p = peek(currentPos);
-      while (p !== Tokens.EOF && !(p === '"' && !escaping)) {
-        escaping = (p === '\\');
-        currentPos++;
-        p = peek(currentPos);
-      }
-      if (p === Tokens.EOF) {
-        throw "Syntax error";
-      }
+      p = peek(currentPos);
+    }
+    if (p === Tokens.EOF) {
+      throw "Syntax error";
+    }
+    currentPos++;
+    const s = input.substring(start, currentPos - 1);
+    return escapeChars(s);
+  };
+
+  const getIdentifier = () => {
+    const start = currentPos;
+    let p = peek(currentPos);
+    const excluded = ["\n", "\t", " ", "[", "]", "=", Tokens.EOF];
+    while (excluded.indexOf(p) === -1) {
       currentPos++;
-      var s = input.substring(start, currentPos - 1);
-      return escapeChars(s);
-    };
+      p = peek(currentPos);
+    }
+    return input.substring(start, currentPos);
+  };
 
-    var getIdentifier = function() {
-      var start = currentPos;
-      var p = peek(currentPos);
-      var excluded = ['\n', '\t', ' ', '[', ']', '=', Tokens.EOF];
-      while (excluded.indexOf(p) === -1) {
-        currentPos++;
-        p = peek(currentPos);
-      }
-      return input.substring(start, currentPos);
-    };
-
-    var getToken = function() {
-      switch (peek(currentPos)) {
+  const getToken = () => {
+    switch (peek(currentPos)) {
       case Tokens.EOF:
         return Tokens.EOF;
-      case '\t':
+      case "\t":
         currentPos++;
         return getToken();
-      case ' ':
+      case " ":
         currentPos++;
         return getToken();
-      case '\n':
+      case "\n":
         currentPos++;
         return Tokens.NEWLINE;
-      case '[':
+      case "[":
         currentPos++;
         return Tokens.LBR;
-      case ']':
+      case "]":
         currentPos++;
         return Tokens.RBR;
-      case '=':
+      case "=":
         currentPos++;
         return Tokens.EQ;
-      case ';':
-        var p = peek(currentPos);
-        while (p != '\n') {
+      case ";":
+        let p = peek(currentPos);
+        while (p != "\n") {
           if (p === Tokens.EOF) {
             throw "Expected newline";
           } else {
@@ -110,150 +105,150 @@ module.exports = (function() {
         currentPos++;
         return Tokens.COMMENT;
       case '"':
-        var lit = getStringLiteral();
+        const lit = getStringLiteral();
         return [Tokens.STRINGLIT, lit];
       default:
-        var id = getIdentifier();
+        const id = getIdentifier();
         return [Tokens.ID, id];
-      }
-    };
-    return getToken;
+    }
+  };
+  return getToken;
+};
+
+// Given a token generator (made via lexer()), returns a function of
+// no arguments that, when called, returns a valid parse (a list of
+// parsed expressions), if there is one
+export const parser = (getToken) => {
+  let currentToken = getToken();
+  let currentLine = 1;
+
+  const nextToken = () => {
+    currentToken = getToken();
   };
 
-  // Given a token generator (made via lexer()), returns a function of
-  // no arguments that, when called, returns a valid parse (a list of
-  // parsed expressions), if there is one
-  Parse.parser = function(getToken) {
-    var currentToken = getToken();
-    var currentLine = 1;
+  // program: null | line program
+  const program = () => {
+    if (currentToken !== Tokens.EOF) {
+      const nextLine = line();
+      return nextLine.concat(program());
+    } else {
+      return [];
+    }
+  };
 
-    var nextToken = function() {
-      currentToken = getToken();
-    };
-
-    // program: null | line program
-    var program = function() {
-      if (currentToken !== Tokens.EOF) {
-        var nextLine = line();
-        return nextLine.concat(program());
-      } else {
-        return [];
-      }
-    };
-
-    // line: comment | newline | stmt newline | stmt comment
-    var line = function() {
-      if (currentToken === Tokens.COMMENT) {
+  // line: comment | newline | stmt newline | stmt comment
+  const line = () => {
+    if (currentToken === Tokens.COMMENT) {
+      nextToken();
+      currentLine++;
+      return [];
+    } else if (currentToken === Tokens.NEWLINE) {
+      nextToken();
+      currentLine++;
+      return [];
+    } else {
+      const nextStmt = stmt();
+      if (currentToken === Tokens.COMMENT || currentToken === Tokens.NEWLINE) {
         nextToken();
         currentLine++;
-        return [];
-      } else if (currentToken === Tokens.NEWLINE) {
-        nextToken();
-        currentLine++;
-        return [];
+        return [nextStmt];
       } else {
-        var nextStmt = stmt();
-        if (currentToken === Tokens.COMMENT ||
-            currentToken === Tokens.NEWLINE)
-        {
-          nextToken();
-          currentLine++;
-          return [nextStmt];
-        } else {
-          throw "Parse error -- line expected a COMMENT or NEWLINE";
-        }
+        throw "Parse error -- line expected a COMMENT or NEWLINE";
       }
-    };
+    }
+  };
 
-    // stmt: lookup EQ expr
-    var stmt = function() {
-      if (currentToken === Tokens.LBR) {
-        var nextLookup = lookup();
-        if (currentToken === Tokens.EQ) {
-          nextToken();
-          var nextExpr = expr();
-          return {
-            type: "instruction",
-            index: currentLine.toString(),
-            key: nextLookup,
-            val: nextExpr
-          };
-        } else {
-          throw "Parse error -- stmt expected EQ";
-        }
+  // stmt: lookup EQ expr
+  const stmt = () => {
+    if (currentToken === Tokens.LBR) {
+      const nextLookup = lookup();
+      if (currentToken === Tokens.EQ) {
+        nextToken();
+        const nextExpr = expr();
+        return {
+          type: "instruction",
+          index: currentLine.toString(),
+          key: nextLookup,
+          val: nextExpr,
+        };
       } else {
-        throw "Parse error -- stmt expected LBR";
+        throw "Parse error -- stmt expected EQ";
       }
-    };
+    } else {
+      throw "Parse error -- stmt expected LBR";
+    }
+  };
 
-    // expr: null | ID expr | lookup expr | stringlit expr
-    var expr = function() {
-      if (currentToken[0] === Tokens.ID) {
-        var id = [currentToken[1]];
-        nextToken();
-        if (currentToken[0] === Tokens.ID ||
-            currentToken === Tokens.LBR ||
-            currentToken[0] === Tokens.STRINGLIT)
-        {
-          return id.concat(expr());
-        } else {
-          return id;
-        }
-      } else if (currentToken === Tokens.LBR) {
-        var nextLookup = lookup();
-        if (currentToken[0] === Tokens.ID ||
-            currentToken === Tokens.LBR ||
-            currentToken[0] === Tokens.STRINGLIT)
-        {
-          return nextLookup.concat(expr());
-        } else {
-          return nextLookup;
-        }
-      } else if (currentToken[0] === Tokens.STRINGLIT) {
-        var lit = [currentToken[1]];
-        nextToken();
-        if (currentToken[0] === Tokens.ID ||
-            currentToken === Tokens.LBR ||
-            currentToken[0] === Tokens.STRINGLIT)
-        {
-          return lit.concat(expr());
-        } else {
-          return lit;
-        }
+  // expr: null | ID expr | lookup expr | stringlit expr
+  const expr = () => {
+    if (currentToken[0] === Tokens.ID) {
+      const id = [currentToken[1]];
+      nextToken();
+      if (
+        currentToken[0] === Tokens.ID ||
+        currentToken === Tokens.LBR ||
+        currentToken[0] === Tokens.STRINGLIT
+      ) {
+        return id.concat(expr());
       } else {
-        throw "Parse error -- expr expected an ID, LBR, or STRINGLIT";
+        return id;
       }
-    };
+    } else if (currentToken === Tokens.LBR) {
+      const nextLookup = lookup();
+      if (
+        currentToken[0] === Tokens.ID ||
+        currentToken === Tokens.LBR ||
+        currentToken[0] === Tokens.STRINGLIT
+      ) {
+        return nextLookup.concat(expr());
+      } else {
+        return nextLookup;
+      }
+    } else if (currentToken[0] === Tokens.STRINGLIT) {
+      const lit = [currentToken[1]];
+      nextToken();
+      if (
+        currentToken[0] === Tokens.ID ||
+        currentToken === Tokens.LBR ||
+        currentToken[0] === Tokens.STRINGLIT
+      ) {
+        return lit.concat(expr());
+      } else {
+        return lit;
+      }
+    } else {
+      throw "Parse error -- expr expected an ID, LBR, or STRINGLIT";
+    }
+  };
 
-    // lookup: [ expr ]
-    var lookup = function() {
-      if (currentToken === Tokens.LBR) {
+  // lookup: [ expr ]
+  const lookup = () => {
+    if (currentToken === Tokens.LBR) {
+      nextToken();
+      const nextExpr = expr();
+      if (currentToken === Tokens.RBR) {
         nextToken();
-        var nextExpr = expr();
+        return [
+          {
+            type: "reference",
+            key: nextExpr,
+          },
+        ];
+      } else if (currentToken[0] === Tokens.ID) {
+        const res = nextExpr.concat(expr());
         if (currentToken === Tokens.RBR) {
           nextToken();
-          return [{
-            type: "reference",
-            key: nextExpr
-          }];
-        } else if (currentToken[0] === Tokens.ID) {
-          var res = nextExpr.concat(expr());
-          if (currentToken === Tokens.RBR) {
-            nextToken();
-            return res;
-          } else {
-            throw "Parse error -- lookup expected a RBR";
-          }
+          return res;
         } else {
-          throw "Parse error -- lookup expected a RBR or ID";
+          throw "Parse error -- lookup expected a RBR";
         }
       } else {
-        throw "Parse error -- lookup expected a LBR";
+        throw "Parse error -- lookup expected a RBR or ID";
       }
-    };
-
-    return program;
+    } else {
+      throw "Parse error -- lookup expected a LBR";
+    }
   };
 
-  return Parse;
-}());
+  return program;
+};

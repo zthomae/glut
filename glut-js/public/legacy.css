@@ -1,59 +1,59 @@
 #top-pane {
     height: 80vh;
-}
+  }
 
-#data {
+  #data {
     width: 55%;
     height: 100%;
     float: left;
-}
+  }
 
-#code {
+  #code {
     width: 100%;
     height: 90%;
     overflow-y: scroll;
-}
+  }
 
-#result {
+  #result {
     width: 35%;
     height: 100%;
     float: right;
     overflow-y: scroll;
-}
+  }
 
-#controls {
+  #controls {
     height: 5%;
     margin-top: 5%;
-}
+  }
 
-#pc-wrapper {
+  #pc-wrapper {
     display: inline-block;
     margin-left: 20px;
-}
+  }
 
-.heading {
+  .heading {
     display: inline-block;
     width: 45%;
-}
+  }
 
-#bottom-pane {
+  #bottom-pane {
     height: 15vh;
-}
+  }
 
-#input {
+  #input {
     width: 45%;
     height: 100%;
     float: left;
     overflow-y: scroll;
-}
+  }
 
-#output {
+  #output {
     width: 45%;
     height: 100%;
     float: right;
     overflow-y: scroll;
-}
+  }
 
-#output span {
+  #output span {
     display: block;
-}
+  }

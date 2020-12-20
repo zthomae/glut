@@ -11,7 +11,7 @@ export const create = function(e) {
     code: "",
     format: function() {
       this.code = this.elem.innerText;
-      if (this.code[this.code.length - 1] != "\n") {
+      if (this.code[this.code.length - 1] !== "\n") {
         this.code += "\n";
       }
       const lines = this.code.split("\n").map(makeLine);

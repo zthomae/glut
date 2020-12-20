@@ -23,12 +23,6 @@ const updateEntry = (key, val) => {
 
 const updatePC = (val) => document.getElementById("pc").value = val;
 
-const deleteChildren = (root) => {
-  while (root.firstChild) {
-    root.removeChild(root.firstChild);
-  }
-};
-
 export const Create = function(root) {
   let locked = false;
   const edit = Editable.create(root.querySelector("#code"));

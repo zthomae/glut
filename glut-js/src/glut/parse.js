@@ -52,7 +52,7 @@ export const lexer = (input) => {
       p = peek(currentPos);
     }
     if (p === Tokens.EOF) {
-      throw "Syntax error";
+      throw new Error("Syntax error");
     }
     currentPos++;
     const s = input.substring(start, currentPos - 1);
@@ -94,9 +94,9 @@ export const lexer = (input) => {
         return Tokens.EQ;
       case ";":
         let p = peek(currentPos);
-        while (p != "\n") {
+        while (p !== "\n") {
           if (p === Tokens.EOF) {
-            throw "Expected newline";
+            throw new Error("Expected newline");
           } else {
             currentPos++;
             p = peek(currentPos);
@@ -153,7 +153,7 @@ export const parser = (getToken) => {
         currentLine++;
         return [nextStmt];
       } else {
-        throw "Parse error -- line expected a COMMENT or NEWLINE";
+        throw new Error("Parse error -- line expected a COMMENT or NEWLINE");
       }
     }
   };
@@ -172,10 +172,10 @@ export const parser = (getToken) => {
           val: nextExpr,
         };
       } else {
-        throw "Parse error -- stmt expected EQ";
+        throw new Error("Parse error -- stmt expected EQ");
       }
     } else {
-      throw "Parse error -- stmt expected LBR";
+      throw new Error("Parse error -- stmt expected LBR");
     }
   };
 
@@ -217,7 +217,7 @@ export const parser = (getToken) => {
         return lit;
       }
     } else {
-      throw "Parse error -- expr expected an ID, LBR, or STRINGLIT";
+      throw new Error("Parse error -- expr expected an ID, LBR, or STRINGLIT");
     }
   };
 
@@ -240,13 +240,13 @@ export const parser = (getToken) => {
           nextToken();
           return res;
         } else {
-          throw "Parse error -- lookup expected a RBR";
+          throw new Error("Parse error -- lookup expected a RBR");
         }
       } else {
-        throw "Parse error -- lookup expected a RBR or ID";
+        throw new Error("Parse error -- lookup expected a RBR or ID");
       }
     } else {
-      throw "Parse error -- lookup expected a LBR";
+      throw new Error("Parse error -- lookup expected a LBR");
     }
   };
 

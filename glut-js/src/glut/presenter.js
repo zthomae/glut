@@ -5,6 +5,7 @@ export const Create = function(view) {
   let m = null;
   let delay = 0;
   let breaks = {};
+  let running = false;
   return {
     start: function() {
       view.clear();

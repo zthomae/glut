@@ -9,9 +9,9 @@ At the time, I had no professional experience, be it with JavaScript or otherwis
 It was also written without using a frontend framework.
 At the time, this was because I wanted to experiment with implementing it multiple times over to learn how different frameworks worked.
 However, as we can see, this didn't happen.
-At the time of this writing (October 2020), I've become interested in rewriting it to meet the standards I would follow today.
-This will include using a modern JavaScript dialect, modern development dependencies, and React, which is currently my frontend framework of choice.
-I don't expect that the code will ever be "good" -- and I especially don't want to spend too much time digging into the handcrafted parser -- but I at least want to be relatively comfortable with the code being online and in my name.
+At the time of this writing (October 2020), I became interested in lightly editing the code style to be a little closer to what I would do today.
+I've determined that I'm not interested in rewriting the simulator -- that's written in a very... particular style that has impacted most of the files in the project.
+What I have still works as a demonstration of the language, and that's all it needs to do.
 
 ## What is this?
 
